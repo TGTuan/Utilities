@@ -1,0 +1,66 @@
+local Loader = {}
+
+-- [[SERVICES]]
+local RunSer = game:GetService("RunService")
+-- [[VARIABLES]]
+local Loaded = false
+local Loaded_Modules = {}
+
+--[[FUNCTIONS]]
+function Load(fold : Folder) 
+	if fold:IsA("ModuleScript") then
+		return
+	end
+	for _,module in fold:GetChildren() do
+		-- Load the folder inside the current folder
+		if module:IsA("Folder") then
+			Load(module)
+		end
+		-- Skips if the selected child is not a module
+		if not module:IsA("ModuleScript") then
+			continue
+		end
+		local success, Module_Loaded = pcall(require,module)
+		-- Skips if can not load the module
+		if not success then
+			wait(`Cannot load module named: {module.Name}`)
+			continue
+		end
+		Loaded_Modules[module.Name] = Module_Loaded
+	end
+end
+
+--[[MAIN FUNCTIONS]]
+function Loader.LoadAll()
+	if Loaded then return end
+	Loaded = true
+	local IsClient = false
+	
+	local Load_Folder
+	local Shared_Folder = game:GetService("ReplicatedStorage").Scripts.Shared
+	local Shared
+	-- Check if the request was sent from the server script or the client
+	if RunSer:IsClient() then IsClient = true end
+	
+	if IsClient then
+		Load_Folder = game:GetService("ReplicatedStorage").Scripts.Clients
+	else 
+		Load_Folder = game:GetService("ServerScriptService").Server
+	end
+	
+	Load(Load_Folder)
+	Load(Shared_Folder)
+	-- Init all the functions
+	for _,module in Loaded_Modules do
+		local HasInit = typeof(module.init) == "function"
+		if HasInit then
+			task.defer(module.init,module)
+		end
+	end
+end
+
+function Loader.Get(name : string)
+	return Loaded_Modules[name]
+end
+
+return Loader
