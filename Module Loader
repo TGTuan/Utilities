@@ -23,7 +23,7 @@ function Load(fold : Folder)
 		local success, Module_Loaded = pcall(require,module)
 		-- Skips if can not load the module
 		if not success then
-			wait(`Cannot load module named: {module.Name}`)
+			warn(`Cannot load module named: {module.Name}`)
 			continue
 		end
 		Loaded_Modules[module.Name] = Module_Loaded
